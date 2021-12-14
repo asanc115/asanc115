@@ -1,0 +1,51 @@
+---
+# Address vulnerabilities found by Rapid 7
+
+- name: Ensure Anonymous root login is not allowed #Rapid 7 VulID: unix-anonymous-root-logins
+  ansible.builtin.template:
+    src: templates/securetty.j2
+    dest: /etc/securetty
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Ensure ICMP Timestamp responses are dropped #Rapid 7 VulID: generic-icmp-timestamp
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: icmp
+    icmp_type: timestamp-request
+    jump: DROP
+  notify: iptables
+
+- name: Ensure ICMP Timestamp responses are dropped #Rapid 7 VulID: generic-icmp-timestamp
+  ansible.builtin.iptables:
+    chain: OUTPUT
+    protocol: icmp
+    icmp_type: timestamp-reply
+    jump: DROP
+  notify: iptables
+
+- name: Friendly Patch #Vulnerability Hygiene
+  ansible.builtin.yum:
+    name: '*'
+    state: latest
+  register: yumcommandout
+
+- name: Print errors if yum failed
+  ansible.builtin.debug:
+    msg: "yum command produced errors"
+  when: yumcommandout is not defined
+
+- name: Check to see if we need a reboot
+  command: needs-restarting -r
+  register: result
+  ignore_errors: yes
+
+- name: display result
+  ansible.builtin.debug:
+    var: result.rc
+
+- name: Reboot Server if Necessary
+  ansible.builtin.reboot:
+  when: result.rc == 1
+
