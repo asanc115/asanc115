@@ -120,7 +120,7 @@
       community.windows.win_security_policy:
         section: Registry Values
         key: MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\LegalNoticeCaption
-        value: 1,"Consent to Monitor Company Provided Resources & Systems"
+        value: 1,"US Department of Defense Warning Statement"
 
 
     - name: Ensure RTX Banner Text #Cat II
@@ -476,8 +476,8 @@
         data: 0
         datatype: dword
 
-#    - name: Windows Server 2019 built-in administrator account must be renamed #Cat II
-#      community.windows.win_security_policy:
-#        section: System Access
-#        key: NewAdministratorName
-#        value: "MC_Admin"
+    - name: Windows Server 2019 built-in administrator account must be renamed #Cat II
+      community.windows.win_security_policy:
+        section: System Access
+        key: NewAdministratorName
+        value: "MC_Admin"

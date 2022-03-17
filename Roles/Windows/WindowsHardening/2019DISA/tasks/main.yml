@@ -15,10 +15,6 @@
     success_msg: "{{ ansible_distribution }} {{ ansible_distribution_major_version }} is the detected operating system."
     fail_msg: "This role can only be run against Windows Server 2019 Editions. {{ ansible_distribution }} {{ ansible_distribution_major_version }} is not supported."
 
-- name: Raytheon Hygiene
-  import_tasks: ray_hygiene.yaml
-  tags: ray
-
 - name: Cat I
   import_tasks: cat1.yaml
   tags: cat1
