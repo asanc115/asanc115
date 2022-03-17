@@ -1,0 +1,24 @@
+---
+# Covers Section 2 of CIS Benchmark
+
+- name: Ensure chrony is configured correctly #2.1.1.2
+  ansible.builtin.lineinfile:
+    path: "{{ item.path }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - path: /etc/chrony.conf
+      regexp: '^server'
+      line: "server 169.254.169.123 prefer iburst minpoll 4 maxpoll 4"
+    - path: /etc/sysconfig/chronyd
+      regexp: '^OPTIONS='
+      line: 'OPTIONS="-u chrony"'
+
+- name: Ensure certain packages are not installed per CIS #2.1.17--18
+  ansible.builtin.yum:
+    name:
+      - nfs-utils
+      - rpcbind
+      - rsync
+      - amazon-ssm-agent.x86_64
+    state: absent

@@ -1,0 +1,114 @@
+---
+# Section 5 of CIS Benchmark
+
+- name: Ensure cron time directories have proper permissions #5.1.3--7
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: '0700'
+  with_items:
+    - /etc/cron.hourly
+    - /etc/cron.daily
+    - /etc/cron.weekly
+    - /etc/cron.monthly
+    - /etc/cron.d
+
+- name: Ensure crontab directory has proper permissions #5.1.2
+  ansible.builtin.file:
+    path: /etc/crontab
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Ensure /etc/cron.d permissions are properly configured #5.1.7
+  ansible.builtin.file:
+    path: /etc/cron.d
+    mode: '0700'
+
+- name: Ensure cron.deny and at.deny does not exist #5.1.8 #5.1.9
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/cron.deny
+    - /etc/at.deny
+
+- name: Check to see if cron.allow already exists #Pre Req 5.1.8--9
+  ansible.builtin.stat:
+    path: /etc/cron.allow
+  register: cron
+
+- name: Check to see if at.allow already exists #Pre Req 5.1.8--9
+  ansible.builtin.stat:
+    path: /etc/at.allow
+  register: at
+
+- name: Ensure cron & at allow files exist and are restricted #5.1.8--9
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: touch
+    owner: root
+    group: root
+    mode: '0600'
+  with_items:
+    - /etc/cron.allow
+    - /etc/at.allow
+  when: not cron.stat.exists or not at.stat.exists
+
+- name: Ensure sudoers use pty and sudo log file exists #5.2.2--3
+  ansible.builtin.lineinfile:
+    path: "{{ item.path }}"
+    line: "{{ item.line }}"
+  with_items:
+    - path: /etc/sudoers
+      line: 'Defaults use_pty'
+    - path: /etc/sudoers.d/90-cloud-init-users
+      line: 'Defaults use_pty'
+    - path: /etc/sudoers
+      line: 'Defaults logfile="/var/log/sudo.log"'
+    - path: /etc/sudoers.d/90-cloud-init-users
+      line: 'Defaults logfile="/var/log/sudo.log"'
+- name: Ensure default user shell timeout is configured #5.5.4
+  ansible.builtin.lineinfile:
+    path: /etc/bashrc
+    regexp: '^TMOUT='
+    line: "readonly TMOUT=900 ; export TMOUT"
+
+- name: Ensure default user mask is configured #5.5.5
+  ansible.builtin.replace:
+    path: /etc/bashrc
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.rep }}"
+  with_items:
+    - regexp: '^       umask 002'
+      rep: "       umask 077"
+    - regexp: '^       umask 022'
+      rep: "       umask 077"
+
+- name: Ensure default user mask is configured #5.5.5
+  ansible.builtin.replace:
+    path: /etc/csh.cshrc
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.rep }}"
+  with_items:
+    - regexp: '^    umask 002'
+      rep: "    umask 077"
+    - regexp: '^    umask 022'
+      rep: "    umask 077"
+
+- name: Ensure default user mask is configured #5.5.5
+  ansible.builtin.replace:
+    path: /etc/profile
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.rep }}"
+  with_items:
+    - regexp: '^    umask 002'
+      rep: "    umask 077"
+    - regexp: '^    umask 022'
+      rep: "    umask 077"
+
+- name: Ensure access to the su command is restricted #5.7
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/su
+    line: "auth required pam_wheel.so use_uid group=wheel"

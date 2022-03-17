@@ -1,0 +1,86 @@
+---
+
+    - name: Windows Server 2019 Application Compatibility Program Inventory must be prevented from collecting data and sending the information to Microsoft #Cat III
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Policies\Microsoft\Windows\AppCompat
+        name: DisableInventory
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 must be configured to ignore NetBIOS name release requests except from WINS servers #Cat III
+      ansible.windows.win_regedit:
+        path: HKLM:\System\CurrentControlSet\Services\Netbt\Parameters
+        name: NoNameReleaseOnDemand
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 Internet Protocol version 6 (IPv6) source routing must be configured to the highest protection level to prevent IP source routing #Cat III
+      ansible.windows.win_regedit:
+        path: HKLM:\System\CurrentControlSet\Services\Tcpip6\Parameters
+        name: DisableIPSourceRouting
+        data: 2
+        datatype: dword
+
+    - name: Windows Server 2019 source routing must be configured to the highest protection level to prevent Internet Protocol (IP) source routing. # Cat III
+      ansible.windows.win_regedit:
+        path: HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters
+        name: DisableIPSourceRouting
+        data: 2
+        datatype: dword
+
+    - name: Windows Server 2019 must be configured to prevent Internet Control Message Protocol (ICMP) redirects from overriding Open Shortest Path First (OSPF)-generated routes #Cat III
+      ansible.windows.win_regedit:
+        path: HKLM:\System\CurrentControlSet\Services\Tcpip\Parameters
+        name: EnableICMPRedirect
+        data: 0
+        datatype: dword
+
+    - name: Windows Server 2019 Windows Update must not obtain updates from other PCs on the Internet #Cat III
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Policies\Microsoft\Windows\DeliveryOptimization
+        name: DODownloadMode
+        data: 1
+        datatype: dword
+
+    - name: Ensure Temporary Directory exists for neccessary files
+      ansible.windows.win_file:
+        path: C:\Tempz
+        state: directory
+
+    - name: Copy DoD Certs into Temp Directory
+      ansible.windows.win_copy:
+        src: files/DoD_Certs.zip
+        dest: C:\Tempz\
+
+    - name: Unzip DoD Certs
+      community.windows.win_unzip:
+        src: C:\Tempz\DoD_Certs.zip
+        dest: C:\Tempz
+
+    - name: Ensure DoD Root Certs are installed in Trusted Root Certifcate Store #Cat III
+      ansible.windows.win_certificate_store:
+        path: "{{ item }}"
+        key_storage: machine
+        store_name: Root
+      with_items:
+        - C:\Tempz\DoD_Root_CA_2.cer
+        - C:\Tempz\DoD_Root_CA_3.cer
+        - C:\Tempz\DoD_Root_CA_4.cer
+        - C:\Tempz\DoD_Root_CA_5.cer
+
+    - name: Ensure DoD Interoperability Certs are installed in Untrusted Certificates #Cat III
+      ansible.windows.win_certificate_store:
+        path: "{{ item }}"
+        key_storage: machine
+        store_name: Disallowed
+      with_items:
+        - C:\Tempz\DoD_Interoperability_Root_CA_1.cer
+        - C:\Tempz\DoD_Interoperability_Root_CA_2.cer
+        - C:\Tempz\US_DoD_CCEB_Interoperability_Root_CA_2.cer
+        - C:\Tempz\US_DoD_CCEB_Interoperability_Root_CA_2_DoD_Root_CA_3.cer
+
+    - name: Clean up
+      ansible.windows.win_file:
+        path: C:\Tempz
+        state: absent
+

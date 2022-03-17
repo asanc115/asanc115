@@ -1,0 +1,5 @@
+---
+
+- hosts: wins
+  roles:
+    - 2019DISA

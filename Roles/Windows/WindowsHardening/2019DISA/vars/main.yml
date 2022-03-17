@@ -1,0 +1,10 @@
+---
+# vars file for 2019DISA
+
+Banner: "You are connecting to a Raytheon Company information system using a non-Raytheon device. Connecting to a Raytheon information system, network or other asset (Company assets) shall only be for authorized use by authorized users. Unauthorized access to or use of Company assets is prohibited and subject to criminal and civil penalties and employment penalties, up to and including termination, 
+BY CONNECTING, YOU AGREE TO THE FOLLOWING
+a. You have no reasonable expectation of privacy or confidentiality regarding any communications or information transmitted or received while connected to a Company asset.
+b. You acknowledge and consent to monitoring, recording, and blocking by Raytheon Company (or its third-party designee) of your activities (including personal communications) that relate to your interaction with Company assets. Raytheon Company may use records of such activities and disclose them to third parties, including government entities, for any lawful purpose. “Monitoring” includes interception or review of electronic communications and other information, while in transmission or stored.
+c. Unless specifically authorized by Raytheon Company in writing, you shall not store or transmit to a non-Raytheon device the following types of information, Raytheon Most Private, Raytheon Proprietary, Raytheon Competition Sensitive, or Internal Use Only (“Sensitive Information”).
+d. If Raytheon Company determines that any Sensitive Information is, or is reasonably believed to be, stored on your Raytheon or non-Raytheon device without authorization, you shall immediately surrender that device (even if personally owned) to Raytheon Company.
+e. You accept all risk to the Raytheon or non-Raytheon device and the communications and information stored on it."

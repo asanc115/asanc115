@@ -1,0 +1,483 @@
+---
+
+    - name: Windows Server 2019 minimum password age must be configured to at least one day #Cat II
+      community.windows.win_security_policy:
+        section: System Access
+        key: MinimumPasswordAge
+        value: 1
+
+    - name: Windows Server 2019 minimum password length must be configured to 14 characters #Cat II
+      community.windows.win_security_policy:
+        section: System Access
+        key: MinimumPasswordLength
+        value: 14
+
+    - name: Windows Server 2019 password history must be configured to 24 passwords remembered #Cat II
+      community.windows.win_security_policy:
+        section: System Access
+        key: PasswordHistorySize
+        value: 24
+
+    - name: Windows Server 2019 must have the number of allowed bad logon attempts configured to three or less #Cat II
+      community.windows.win_security_policy:
+        section: System Access
+        key: LockoutBadCount
+        value: 3
+
+    - name: Windows Server 2019 must have the period of time before the bad logon counter is reset configured to 15 minutes or greater #Cat II
+      community.windows.win_security_policy:
+        section: System Access
+        key: ResetLockoutCount
+        value: 15
+
+    - name: Windows Server 2019 account lockout duration must be configured to 15 minutes or greater #Cat II
+      community.windows.win_security_policy:
+        section: System Access
+        key: LockoutDuration
+        value: 15
+
+    - name: Windows Server 2019 built-in guest account must be renamed #Cat II
+      community.windows.win_security_policy:
+        section: System Access
+        key: NewGuestName
+        value: "Visitor"
+
+    - name: Windows Server 2019 Access this computer from the network user right must only be assigned to the Administrators and Authenticated Users groups on domain-joined member servers and standalone systems #Cat II
+      ansible.windows.win_user_right:
+        name: SeNetworkLogonRight
+        users:
+        - S-1-5-11 #Authenticated Users
+        - S-1-5-32-544 #Administrators
+        action: set
+
+    - name: Windows Server 2019 Back up files and directories user right must only be assigned to the Administrators group #Cat II
+      ansible.windows.win_user_right:
+        name: SeBackupPrivilege
+        users: S-1-5-32-544
+        action: set
+
+    - name: Windows Server 2019 Increase scheduling priority user right must only be assigned to the Administrators group #Cat II
+      ansible.windows.win_user_right:
+        name: SeIncreaseBasePriorityPrivilege
+        users: S-1-32-544
+        action: set
+
+    - name: Windows Server 2019 Allow log on locally user right must only be assigned to the Administrators group #Cat II
+      ansible.windows.win_user_right:
+        name: SeInteractiveLogonRight
+        users: S-1-5-32-544
+        action: set
+
+    - name: Windows Server 2019 Restore files and directories user right must only be assigned to the Administrators group #Cat II
+      ansible.windows.win_user_right:
+        name: SeRestorePrivilege
+        users: S-1-5-32-544
+        action: set
+
+    - name: Windows Server 2019 Deny access to this computer from the network user right on domain-joined member servers must be configured to prevent access from highly privileged domain accounts and local accounts and from unauthenticated access on all systems #Cat II
+      ansible.windows.win_user_right:
+        name: SeDenyNetworkLogonRight
+        users: S-1-5-32-546 #Guests
+        action: set
+
+    - name: Windows Server 2019 Deny log on as a batch job user right on domain-joined member servers must be configured to prevent access from highly privileged domain accounts and from unauthenticated access on all systems #Cat II
+      ansible.windows.win_user_right:
+        name: SeDenyBatchLogonRight
+        users: S-1-5-32-546
+        action: set
+
+    - name: Windows Server 2019 Deny log on locally user right on domain-joined member servers must be configured to prevent access from highly privileged domain accounts and from unauthenticated access on all systems #Cat II
+      ansible.windows.win_user_right:
+        name: SeDenyInteractiveLogonRight
+        users: S-1-5-32-546
+        action: set
+
+    - name: Windows Server 2019 Deny log on through Remote Desktop Services user right on domain-joined member servers must be configured to prevent access from highly privileged domain accounts and all local accounts and from unauthenticated access on all systems #Cat II
+      ansible.windows.win_user_right:
+        name: SeDenyRemoteInteractiveLogonRight
+        users: S-1-5-32-546
+        action: set    
+        
+    - name: Windows Server 2019 must restrict remote calls to the Security Account Manager (SAM) to Administrators on domain-joined member servers and standalone systems #Cat II
+      community.windows.win_security_policy:
+        section: Registry Values
+        key: MACHINE\System\CurrentControlSet\Control\Lsa\RestrictRemoteSAM
+        value: 1,"O:BAG:BAD:(A;;RC;;;BA)"
+
+    - name: Windows Server 2019 session security for NTLM SSP-based clients must be configured to require NTLMv2 session security and 128-bit encryption #Cat II
+      community.windows.win_security_policy:
+        section: Registry Values
+        key: MACHINE\System\CurrentControlSet\Control\Lsa\MSV1_0\NTLMMinClientSec
+        value: 4,537395200
+
+    - name: Windows Server 2019 session security for NTLM SSP-based servers must be configured to require NTLMv2 session security and 128-bit encryption #Cat II
+      community.windows.win_security_policy:
+        section: Registry Values
+        key: MACHINE\System\CurrentControlSet\Control\Lsa\MSV1_0\NTLMMinServerSec
+        value: 4,537395200
+
+    - name: Ensure RTX Banner Caption #Cat II
+      community.windows.win_security_policy:
+        section: Registry Values
+        key: MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System\LegalNoticeCaption
+        value: 1,"Consent to Monitor Company Provided Resources & Systems"
+
+
+    - name: Ensure RTX Banner Text #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
+        name: legalnoticetext
+        data: "{{ Banner }}"
+        type: string
+
+    - name: Ensure required Audit Rules per DISA STIG are set with success and failure #Cat II
+      community.windows.win_audit_policy_system:
+        subcategory: "{{ item }}"
+        audit_type: success, failure
+      with_items:
+        - Account Lockout
+        - Audit Policy Change
+        - Credential Validation
+        - IPsec Driver
+        - Logon
+        - Other Object Access Events
+        - Other System Events
+        - Sensitive Privilege Use
+        - System Integrity
+        - User Account Management
+
+    - name: Ensure required Audit Rules per DISA STIG are set with success #Cat II
+      community.windows.win_audit_policy_system:
+        subcategory: "{{ item }}"
+        audit_type: success
+      with_items:
+        - Authentication Policy Change
+        - Authorization Policy Change
+        - Logoff
+        - Other Account Management Events
+        - Process Creation
+        - Security Group Management
+        - Security State Change
+        - Security System Extension
+        - Special Logon
+
+    - name: Ensure secure Remote Procedures Call (RPC) communications is required #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services 
+        name: fEncryptRPCTraffic
+        data: 1
+        type: dword
+
+    - name: Ensure Windows Server 2019 RDP services configured with high level client connection encryption #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services
+        name: MinEncryptionLevel
+        data: 3
+        datatype: dword
+
+    - name: Ensure Audit Process Creation for Command Line is Enabled #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System\Audit
+        name: ProcessCreationIncludeCmdLine_Enabled
+        data: 1
+        datatype: dword
+
+    - name: Ensure Powershell script block logging is enabled #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging
+        name: EnableScriptBlockLogging
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 must prevent the display of slide shows on the lock screen #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization
+        name: NoLockScreenSlideshow
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 must have WDigest Authentication disabled #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\Wdigest
+        name: UseLogonCredential
+        data: 0
+        datatype: dword
+
+    - name: Windows Server 2019 downloading print driver packages over HTTP must be turned off #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Printers
+        name: DisableWebPnPDownload
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 printing over HTTP must be turned off #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Printers
+        name: DisableHTTPPrinting
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 network selection user interface (UI) must not be displayed on the logon screen #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\System
+        name: DontDisplayNetworkSelectionUI
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 Windows Defender SmartScreen must be enabled #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Policies\Microsoft\Windows\System
+        name: EnableSmartScreen
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 must prevent Indexing of encrypted files #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search
+        name: AllowIndexingEncryptedStoresOrItems
+        data: 0
+        datatype: dword
+
+    - name: Windows Server 2019 Windows Remote Management (WinRM) client must not use Digest authentication #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Policies\Microsoft\Windows\WinRM\Client
+        name: AllowDigest
+        data: 0
+        datatype: dword
+
+    - name: Windows Server 2019 administrator accounts must not be enumerated during elevation #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\CredUI
+        name: EnumerateAdministrators
+        data: 0
+        datatype: dword
+
+    - name: Windows Server 2019 Remote Desktop Services must prevent drive redirection #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services
+        name: fDisableCdm
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 Application event log size must be configured to 32768 KB or greater #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\Application
+        name: MaxSize
+        data: 32768
+        datatype: dword
+
+    - name: Windows Server 2019 Security event log size must be configured to 196608 KB or greater #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\Security
+        name: MaxSize
+        data: 196608
+        datatype: dword
+
+    - name: Windows Server 2019 System event log size must be configured to 32768 KB or greater #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\EventLog\System
+        name: MaxSize
+        data: 32768
+        datatype: dword
+
+    - name: Windows Server 2019 must prevent users from changing installation options #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Policies\Microsoft\Windows\Installer
+        name: EnableUserControl
+        data: 0
+        datatype: dword
+
+    - name: Windows Server 2019 must not save passwords in the Remote Desktop Client #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services
+        name: DisablePasswordSaving
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 Remote Desktop Services must always prompt a client for passwords upon connection #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Policies\Microsoft\Windows NT\Terminal Services
+        name: fPromptForPassword
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 Windows Remote Management (WinRM) service must not store RunAs credentials #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Policies\Microsoft\Windows\WinRM\Service
+        name: DisableRunAs
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 must restrict unauthenticated Remote Procedure Call (RPC) clients from connecting to the RPC server on domain-joined member servers and standalone systems #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Rpc
+        name: RestrictRemoteClients
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 Windows Remote Management (WinRM) client must not allow unencrypted traffic #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Policies\Microsoft\Windows\WinRM\Client
+        name: AllowUnencryptedTraffic
+        data: 0
+        datatype: dword
+
+    - name: Windows Server 2019 Windows Remote Management (WinRM) service must not allow unencrypted traffic #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Policies\Microsoft\Windows\WinRM\Service
+        name: AllowUnencryptedTraffic
+        data: 0
+        datatype: dword
+
+    - name: Windows Server 2019 insecure logons to an SMB server must be disabled #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\LanmanWorkstation
+        name: AllowInsecureGuestAuth
+        data: 0
+        datatype: dword
+
+    - name: Windows Server 2019 must be configured to enable Remote host allows delegation of non-exportable credentials #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation
+        name: AllowProtectedCreds
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 group policy objects must be reprocessed even if they have not changed #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Policies\Microsoft\Windows\Group Policy\{35378EAC-683F-11D2-A89A-00C04FBBCFA2}
+        name: NoGPOListChanges
+        data: 0
+        datatype: dword
+        
+    - name: Windows Server 2019 users must be prompted to authenticate when the system wakes from sleep (on battery) #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Policies\Microsoft\Power\PowerSettings\0e796bdb-100d-47d6-a2d5-f7d2daa51f51
+        name: DCSettingIndex
+        data: 1
+        datatype: dword
+        
+    - name: Windows Server 2019 users must be prompted to authenticate when the system wakes from sleep (plugged in) #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Policies\Microsoft\Power\PowerSettings\0e796bdb-100d-47d6-a2d5-f7d2daa51f51
+        name: ACSettingIndex
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 must prevent attachments from being downloaded from RSS feeds #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Policies\Microsoft\Internet Explorer\Feeds
+        name: DisableEnclosureDownload
+        data: 1
+        datatype: dword
+
+    - name: Windows Server 2019 machine inactivity limit must be set to 15 minutes or less, locking the system with the screen saver #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System
+        name: InactivityTimeoutSecs
+        data: 900
+        datatype: dword
+
+    - name: Windows Server 2019 must force audit policy subcategory settings to override audit policy category settings #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\Lsa
+        name: SCENoApplyLegacyAuditPolicy
+        data: 1
+        datatype: dword
+        
+    - name: Windows Server 2019 users must be required to enter a password to access private keys stored on the computer #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Policies\Microsoft\Cryptography
+        name: ForceKeyProtection
+        data: 2
+        datatype: dword
+        
+    - name: Windows Server 2019 Kerberos encryption types must be configured to prevent the use of DES and RC4 encryption suites #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Kerberos\Parameters
+        name: SupportedEncryptionTypes
+        data: 2147483640
+        datatype: dword
+        
+    - name: Windows Server 2019 User Account Control must, at a minimum, prompt administrators for consent on the secure desktop #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System
+        name: ConsentPromptBehaviorAdmin
+        data: 2
+        datatype: dword
+
+    - name: Windows Server 2019 User Account Control approval mode for the built-in Administrator must be enabled #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System
+        name: FilterAdministratorToken
+        data: 1
+        datatype: dword
+        
+    - name: Windows Server 2019 User Account Control must automatically deny standard user requests for elevation #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System
+        name: ConsentPromptBehaviorUser
+        data: 0
+        datatype: dword
+        
+    - name: Windows Server 2019 setting Microsoft network client Digitally sign communications (always) must be configured to Enabled #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\System\CurrentControlSet\Services\LanmanWorkstation\Parameters
+        name: RequireSecuritySignature
+        data: 1
+        datatype: dword
+        
+    - name: Windows Server 2019 setting Microsoft network server Digitally sign communications (always) must be configured to Enabled #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Services\LanManServer\Parameters
+        name: RequireSecuritySignature
+        data: 1
+        datatype: dword
+        
+    - name: Windows Server 2019 setting Microsoft network server Digitally sign communications (if client agrees) must be configured to Enabled #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Services\LanManServer\Parameters
+        name: EnableSecuritySignature
+        data: 1
+        datatype: dword
+        
+    - name: Windows Server 2019 must be configured to use FIPS-compliant algorithms for encryption, hashing, and signing #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\System\CurrentControlSet\Control\Lsa\FIPSAlgorithmPolicy
+        name: Enabled
+        data: 1
+        datatype: dword
+        
+    - name: Windows Server 2019 Smart Card removal option must be configured to Force Logoff or Lock Workstation #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon
+        name: scremoveoption
+        data: 1
+        datatype: string
+        
+    - name: Windows Server 2019 services using Local System that use Negotiate when reverting to NTLM authentication must use the computer identity instead of authenticating anonymously #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\Lsa
+        name: UseMachineId
+        data: 1
+        datatype: dword
+        
+    - name: Windows Server 2019 must prevent NTLM from falling back to a Null session #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0
+        name: allownullsessionfallback
+        data: 0
+        datatype: dword
+        
+    - name: Windows Server 2019 must prevent PKU2U authentication using online identities #Cat II
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\LSA\pku2u
+        name: AllowOnlineID
+        data: 0
+        datatype: dword
+
+#    - name: Windows Server 2019 built-in administrator account must be renamed #Cat II
+#      community.windows.win_security_policy:
+#        section: System Access
+#        key: NewAdministratorName
+#        value: "MC_Admin"
