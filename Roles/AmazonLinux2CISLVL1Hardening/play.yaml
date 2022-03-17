@@ -1,6 +1,0 @@
----
-
-- hosts: linux
-  become: true
-  roles:
-    - LinuxHardening
