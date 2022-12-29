@@ -1,0 +1,5 @@
+---
+# vars file for LinuxHardening
+
+# Create a list of users with uid 1000 to 2000
+users: getent passwd {1000..2000} | awk -F ':' '{print $1}'

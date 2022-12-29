@@ -1,0 +1,49 @@
+---
+
+    - name: Disable 3DES TLS/SSL Cipher Suite
+      ansible.windows.win_shell: Disable-TlsCipherSuite TLS_RSA_WITH_3DES_EDE_CBC_SHA
+
+    - name: Disable TLS 1.0 Client
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Client
+        name: Enabled
+        data: 0
+        type: dword
+
+    - name: Disable TLS 1.0 Server
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server
+        name: Enabled
+        data: 0
+        type: dword
+
+    - name: Disable TLS 1.1 Client
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Client
+        name: Enabled
+        data: 0
+        type: dword
+
+    - name: Disable TLS 1.1 Server
+      ansible.windows.win_regedit:
+        path: HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server
+        name: Enabled
+        data: 0
+        type: dword
+
+    - name: Ensure TLS/SSL Server does not support The Use of Static Key Ciphers
+      ansible.windows.win_shell: |
+        Disable-TlsCipherSuite TLS_RSA_WITH_AES_128_CBC_SHA
+        Disable-TlsCipherSuite TLS_RSA_WITH_AES_128_CBC_SHA256
+        Disable-TlsCipherSuite TLS_RSA_WITH_AES_128_GCM_SHA256
+        Disable-TlsCipherSuite TLS_RSA_WITH_AES_256_CBC_SHA
+        Disable-TlsCipherSuite TLS_RSA_WITH_AES_256_CBC_SHA256
+        Disable-TlsCipherSuite TLS_RSA_WITH_AES_256_GCM_SHA384
+
+    - name: Ensure Windows is updated
+      ansible.windows.win_updates:
+        category_names: '*'
+
+    - name: Reboot to ensure all playbook changes take effect
+      ansible.windows.win_reboot:
+        reboot_timeout: 3600
